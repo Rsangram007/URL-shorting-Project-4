@@ -19,11 +19,6 @@ const isValidRequest = function (object) {
     return Object.keys(object).length > 0;
 };
 
-const isValidUrl = function (value) {
-    let regexForUrl =
-        /(:?^((https|http|HTTP|HTTPS){1}:\/\/)(([w]{3})[\.]{1})?([a-zA-Z0-9]{1,}[\.])[\w]*((\/){1}([\w@? ^=%&amp;~+#-_.]+))*)$/;
-    return regexForUrl.test(value);
-};
 
 // ================================== Connecting to Redis ===============================================//
 
@@ -69,9 +64,7 @@ const urlShortener = async function (req, res) {
             return res.status(400).send({ status: false, message: "Enter a valid URL 1" })
         }
 
-        if (!isValidUrl(longUrl.trim())) {
-            return res.status(400).send({ status: false, message: "Enter a valid URL" });
-        }
+       
 
         let cachedURLCode = await GET_ASYNC(`${longUrl}`)
         if (cachedURLCode) {
@@ -89,15 +82,12 @@ const urlShortener = async function (req, res) {
             url: longUrl
         }
 
-        let urlFound = false;
-        await axios(obj)
-            .then((res) => {
-                if (res.status == 201 || res.status == 200) urlFound = true;
-            })
-            .catch((err) => { });
+        let urlFound;
+        await axios(obj).then(()=>urlFound=true).catch(() => { urlFound = false });
         if (!urlFound) {
             return res.status(400).send({ status: false, message: "Please provide valid LongUrl(RDOP)" })
         }
+
 
         const urlCode = ShortId.generate().toLowerCase();
         const shortUrl = base + "/" + urlCode;
