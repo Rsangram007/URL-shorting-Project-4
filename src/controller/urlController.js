@@ -48,50 +48,38 @@ const urlShortener = async function (req, res) {
         if (!isValidRequest(requestBody)) {
             return res.status(400).send({ status: false, message: "data is required" });
         }
-
         const longUrl = req.body.longUrl;
         const base = "http://localhost:3000";
-
         if (!isValid(longUrl)) {
             return res.status(400).send({ status: false, message: "URL is required" });
         }
-
         if (Object.keys(requestBody).length > 1) {
             return res.status(400).send({ status: false, message: "invalid entry in request body" });
         }
-
         if (!validURL.isUri(longUrl.trim())) {
             return res.status(400).send({ status: false, message: "Enter a valid URL 1" })
         }
-
-       
-
         let cachedURLCode = await GET_ASYNC(`${longUrl}`)
         if (cachedURLCode) {
             return res.status(201).send({ status: true, message: "Already URL shorten(GET)", data: JSON.parse(cachedURLCode)})
         }
 
-        let URLDOC = await UrlModel.findOne({ longUrl: longUrl.trim().toLowerCase() }).select({ _id: 0, __v: 0 })
+        let URLDOC = await UrlModel.findOne({ longUrl: longUrl.trim()}).select({ _id: 0, __v: 0 })
         if (URLDOC) {
             await SET_ASYNC(`${longUrl}`,JSON.stringify(URLDOC),"EX",10)
             return res.status(201).send({ status: true, message: "ALready URL shorten(SET)", data: URLDOC })
         }
-
         let obj = {
             method: "get",
             url: longUrl
         }
-
         let urlFound;
         await axios(obj).then(()=>urlFound=true).catch(() => { urlFound = false });
         if (!urlFound) {
             return res.status(400).send({ status: false, message: "Please provide valid LongUrl(RDOP)" })
         }
-
-
         const urlCode = ShortId.generate().toLowerCase();
         const shortUrl = base + "/" + urlCode;
-
         const urlData = { urlCode: urlCode, longUrl: longUrl.trim(), shortUrl: shortUrl };
 
 
